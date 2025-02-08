@@ -137,9 +137,7 @@ class DataParallelPPOActor(BasePPOActor):
                 logits = logits[:, -response_length - 1:-1]  # (bsz, response_length)
                 log_probs = logprobs_from_logits(logits, micro_batch['responses'])
                 entropy = verl_F.entropy_from_logits(logits)  # (bsz, response_length)
-                assert(1==3)
 
-            assert(1==2)    
             return entropy, log_probs
 
     def _optimizer_step(self):
