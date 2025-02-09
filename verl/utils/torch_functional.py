@@ -51,7 +51,6 @@ def logprobs_from_logits(logits, labels):
     See: https://github.com/pytorch/pytorch/issues/563#issuecomment-330103591
     """
     if FLAH_ATTN_CROSS_ENTROPY_LOSS_AVAILABLE:
-        assert(1==3)
         batch_dim = logits.shape[:-1]
         last_dim = logits.shape[-1]
         logits = logits.reshape(-1, last_dim)
@@ -59,7 +58,6 @@ def logprobs_from_logits(logits, labels):
         output = logprobs_from_logits_flash_attn(logits, labels)
         output = output.view(*batch_dim)
     else:
-        assert(1==2)
         output = logprobs_from_logits_naive(logits, labels)
     return output
 

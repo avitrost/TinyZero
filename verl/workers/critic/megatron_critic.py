@@ -149,6 +149,8 @@ class MegatronPPOCritic(BasePPOCritic):
             vpreds = output.logits  # (bs, sequence_length)
             vpreds = vpreds[:, -response_length - 1:-1]
 
+            if self.config.use_exploration:
+                raise NotImplementedError
             vf_loss, vf_clipfrac = core_algos.compute_value_loss(vpreds=vpreds,
                                                                  values=values,
                                                                  returns=returns,

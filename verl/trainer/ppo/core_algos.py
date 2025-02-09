@@ -239,6 +239,39 @@ def compute_value_loss(vpreds, returns, values, eos_mask, cliprange_value):
     return vf_loss, vf_clipfrac
 
 
+def compute_modified_value_loss(vpreds, returns, values, eos_mask, cliprange_value, log_prob, beta):
+    """Compute the value loss, adjusted by a softmax term to promote exploration. Mostly copied from https://github.com/huggingface/trl/blob/main/trl/trainer/ppo_trainer.py#L1151
+
+    Args:
+        vpreds (`torch.FloatTensor`):
+            Predicted values of the value head, shape (`batch_size`, `response_length`)
+        values (`torch.FloatTensor`):
+            Old values of value head, shape (`batch_size`, `response_length`)
+        log_prob (`Torch.FloatTensor`):
+            Log probabilties of predictions, shape (`batch_size`, `response_length`)
+        beta (`float`):
+            Regularization parameter for softmax adjustment, between -1 and 1
+        returns: (`torch.FloatTensor`):
+            Ground truth returns, shape (`batch_size`, `response_length`)
+
+    Returns:
+        vf_loss: a scalar (`torch.FloatTensor`):
+            value function loss
+        vf_clipfrac: a float
+            The ratio of vf being clipped
+
+    """
+    vpredclipped = verl_F.clip_by_value(vpreds, values - cliprange_value, values + cliprange_value)
+    vf_losses1 = (vpreds - returns)**2
+    vf_losses2 = (vpredclipped - returns)**2
+    vf_loss = 0.5 * verl_F.masked_mean(torch.max(vf_losses1, vf_losses2), eos_mask)
+    vf_clipfrac = verl_F.masked_mean(torch.gt(vf_losses2, vf_losses1).float(), eos_mask)
+
+    softmax = verl_F.masked_mean(torch.exp(log_prob), eos_mask)
+    vf_loss -= beta * softmax
+    return vf_loss, vf_clipfrac, softmax
+
+
 def kl_penalty(logprob: torch.FloatTensor, ref_logprob: torch.FloatTensor, kl_penalty) -> torch.FloatTensor:
     """Compute KL divergence given logprob and ref_logprob.
     Copied from https://github.com/huggingface/trl/blob/main/trl/trainer/ppo_trainer.py#L1104
