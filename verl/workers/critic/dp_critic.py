@@ -148,7 +148,7 @@ class DataParallelPPOCritic(BasePPOCritic):
         self.critic_module.train()
         metrics = {}
 
-        select_keys = ['input_ids', 'responses', 'attention_mask', 'position_ids', 'values', 'returns']
+        select_keys = ['input_ids', 'responses', 'attention_mask', 'position_ids', 'values', 'returns', 'old_log_probs']
         batch = data.select(batch_keys=select_keys).batch
         # Split to make minibatch iterator for updating the actor
         # See PPO paper for details. https://arxiv.org/abs/1707.06347
@@ -197,7 +197,7 @@ class DataParallelPPOCritic(BasePPOCritic):
                         'critic/vf_loss': vf_loss.detach().item(),
                         'critic/vf_clipfrac': vf_clipfrac.detach().item(),
                         'critic/vpred_mean': masked_mean(vpreds, eos_mask).detach().item(),
-                        'critic/softmax': softmax
+                        'critic/softmax': softmax.detach().item()
                     }
                 else:
                     vf_loss, vf_clipfrac = core_algos.compute_value_loss(vpreds=vpreds,
