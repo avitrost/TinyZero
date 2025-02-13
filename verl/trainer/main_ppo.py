@@ -128,6 +128,12 @@ def main_task(config):
         from verl.single_controller.ray import RayWorkerGroup
         ray_worker_group_cls = RayWorkerGroup
 
+    elif config.actor_rollout_ref.actor.strategy == 'fsdp_q':
+        assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
+        from verl.workers.fsdp_q_workers import ActorRolloutRefWorker, CriticWorker
+        from verl.single_controller.ray import RayWorkerGroup
+        ray_worker_group_cls = RayWorkerGroup
+
     elif config.actor_rollout_ref.actor.strategy == 'megatron':
         assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
         from verl.workers.megatron_workers import ActorRolloutRefWorker, CriticWorker
