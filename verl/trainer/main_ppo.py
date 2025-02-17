@@ -114,8 +114,12 @@ def main_task(config):
     pprint(OmegaConf.to_container(config, resolve=True))  # resolve=True will eval symbol values
     OmegaConf.resolve(config)
 
+    pprint('Downloading checkpoint')
+
     # download the checkpoint from hdfs
     local_path = copy_local_path_from_hdfs(config.actor_rollout_ref.model.path)
+
+    pprint('Instantiating tokenizer')
 
     # instantiate tokenizer
     from verl.utils import hf_tokenizer
