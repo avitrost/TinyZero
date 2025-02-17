@@ -110,6 +110,7 @@ def main_task(config):
 
     # print initial config
     from pprint import pprint
+    pprint('Resolving config')
     from omegaconf import OmegaConf
     pprint(OmegaConf.to_container(config, resolve=True))  # resolve=True will eval symbol values
     OmegaConf.resolve(config)
