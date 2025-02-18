@@ -110,31 +110,40 @@ def main_task(config):
 
     # print initial config
     from pprint import pprint
+    pprint('Resolving config')
     from omegaconf import OmegaConf
     pprint(OmegaConf.to_container(config, resolve=True))  # resolve=True will eval symbol values
     OmegaConf.resolve(config)
 
+    pprint('Downloading checkpoint')
+
     # download the checkpoint from hdfs
     local_path = copy_local_path_from_hdfs(config.actor_rollout_ref.model.path)
+
+    pprint('Instantiating tokenizer')
 
     # instantiate tokenizer
     from verl.utils import hf_tokenizer
     tokenizer = hf_tokenizer(local_path)
 
+    pprint('Loaded checkpoint')
     # define worker classes
     if config.actor_rollout_ref.actor.strategy == 'fsdp':
+        pprint('Selected fsdp')
         assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
         from verl.workers.fsdp_workers import ActorRolloutRefWorker, CriticWorker
         from verl.single_controller.ray import RayWorkerGroup
         ray_worker_group_cls = RayWorkerGroup
 
     elif config.actor_rollout_ref.actor.strategy == 'fsdp_q':
+        pprint('Selected fsdp_q')
         assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
         from verl.workers.fsdp_q_workers import ActorRolloutRefWorker, CriticWorker
         from verl.single_controller.ray import RayWorkerGroup
         ray_worker_group_cls = RayWorkerGroup
 
     elif config.actor_rollout_ref.actor.strategy == 'megatron':
+        pprint('Selected megatron')
         assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
         from verl.workers.megatron_workers import ActorRolloutRefWorker, CriticWorker
         from verl.single_controller.ray.megatron import NVMegatronRayWorkerGroup
@@ -144,12 +153,15 @@ def main_task(config):
         raise NotImplementedError
 
     from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role
+    pprint('Imported classes')
 
     role_worker_mapping = {
         Role.ActorRollout: ray.remote(ActorRolloutRefWorker),
         Role.Critic: ray.remote(CriticWorker),
         Role.RefPolicy: ray.remote(ActorRolloutRefWorker)
     }
+
+    pprint('Defined mapping')
 
     global_pool_id = 'global_pool'
     resource_pool_spec = {
@@ -177,13 +189,21 @@ def main_task(config):
         role_worker_mapping[Role.RewardModel] = ray.remote(RewardModelWorker)
         mapping[Role.RewardModel] = global_pool_id
 
+    pprint('Initializing reward function')
+    
     reward_fn = RewardManager(tokenizer=tokenizer, num_examine=0)
+
+    pprint('Initializing val reward function')
 
     # Note that we always use function-based RM for validation
     val_reward_fn = RewardManager(tokenizer=tokenizer, num_examine=1)
 
+    pprint('Initializing resource pool manager')
+
     resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
 
+    pprint('Initializing trainer')
+    
     trainer = RayPPOTrainer(config=config,
                             tokenizer=tokenizer,
                             role_worker_mapping=role_worker_mapping,
@@ -191,7 +211,9 @@ def main_task(config):
                             ray_worker_group_cls=ray_worker_group_cls,
                             reward_fn=reward_fn,
                             val_reward_fn=val_reward_fn)
+    pprint('Initializing workers')
     trainer.init_workers()
+    pprint('Fitting trainer')
     trainer.fit()
 
 
