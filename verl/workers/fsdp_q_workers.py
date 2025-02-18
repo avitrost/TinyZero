@@ -656,25 +656,36 @@ class CriticWorker(Worker):
 
     @register(dispatch_mode=Dispatch.ONE_TO_ALL)
     def init_model(self):
+        print('ENTERED INIT MODEL METHOD')
         # This is used to import external_lib into the huggingface systems
         import_external_libs(self.config.model.get('external_lib', None))
+        print('IMPORTED EXTERNAL LIBS')
 
-        from verl.workers.critic import DataParallelPPOCritic
+        # from verl.workers.critic import DataParallelPPOCritic
+        from verl.workers.critic import DataParallelPPOQCritic
+        print('IMPORTED DATA PARALLEL PPOQ CRITIC')
         self.critic_module, self.critic_optimizer, self.critic_lr_scheduler = self._build_critic_model_optimizer(
             self.config)
+        print('BUILT CRITIC MODEL OPTIMIZER')
 
         if self._is_offload_param:
+            print('OFFLOADING PARAMS')
             offload_fsdp_param_and_grad(module=self.critic_module, offload_grad=self._is_offload_grad)
         if self._is_offload_optimizer:
+            print('OFFLOADING OPTIMIZER')
             offload_fsdp_optimizer(optimizer=self.critic_optimizer)
 
-        self.critic = DataParallelPPOCritic(config=self.config,
+        print('SETTING CRITIC')
+        self.critic = DataParallelPPOQCritic(config=self.config,
                                             critic_module=self.critic_module,
                                             critic_optimizer=self.critic_optimizer)
 
+        print('SETTING FLOPS COUNTER')
         self.flops_counter = FlopsCounter(self.critic_model_config)
 
+        print('EMPTYING CACHE')
         torch.cuda.empty_cache()
+        print('EXITING INIT MODEL METHOD')
 
     @register(dispatch_mode=Dispatch.DP_COMPUTE_PROTO)
     def compute_values(self, data: DataProto):
