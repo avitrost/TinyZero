@@ -39,6 +39,8 @@ def func_generator(self, method_name, dispatch_fn, collect_fn, execute_fn, block
         args, kwargs = dispatch_fn(self, *args, **kwargs)
         output = execute_fn(method_name, *args, **kwargs)
         if blocking:
+            print(f"*****************METHOD NAME: {method_name}*********************")
+            print(f"*****************OUTPUT: {output}*********************")
             output = ray.get(output)
         output = collect_fn(self, output)
         return output
