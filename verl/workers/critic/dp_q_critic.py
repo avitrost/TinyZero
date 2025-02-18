@@ -40,7 +40,6 @@ def extract_values(values, sampled_index):  # Option 1 # TODO: check correctness
         # sampled_index: tensor of shape (batch_size, sequence_length)
         # Gather the logits corresponding to the sampled indices.
         print('Extracting values')
-        assert 1 == 2  # Check if the code reaches this point
         return torch.gather(values, dim=2, index=sampled_index.unsqueeze(-1)).squeeze(-1)
 
 
