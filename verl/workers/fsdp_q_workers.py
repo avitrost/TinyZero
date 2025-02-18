@@ -586,16 +586,16 @@ class CriticWorker(Worker):
             warnings.simplefilter("ignore")
             setattr(critic_model_config, 'classifier_dropout', 0.)
             setattr(critic_model_config, 'hidden_dropout', '0')
-            # critic_module = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=local_path,
-            #                                                                 torch_dtype=torch_dtype,
-            #                                                                 config=critic_model_config,
-            #                                                                 attn_implementation='flash_attention_2',
-            #                                                                 trust_remote_code=trust_remote_code)
-            critic_module = AutoModelForTokenClassification.from_pretrained(pretrained_model_name_or_path=local_path,
+            critic_module = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=local_path,
                                                                             torch_dtype=torch_dtype,
                                                                             config=critic_model_config,
                                                                             attn_implementation='flash_attention_2',
                                                                             trust_remote_code=trust_remote_code)
+            # critic_module = AutoModelForTokenClassification.from_pretrained(pretrained_model_name_or_path=local_path,
+            #                                                                 torch_dtype=torch_dtype,
+            #                                                                 config=critic_model_config,
+            #                                                                 attn_implementation='flash_attention_2',
+            #                                                                 trust_remote_code=trust_remote_code)
             
 
             # some parameters may not in torch_dtype
