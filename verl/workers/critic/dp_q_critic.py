@@ -39,6 +39,8 @@ def extract_values(values, sampled_index):  # Option 1 # TODO: check correctness
         # values: tensor of shape (batch_size, sequence_length, vocab_size)
         # sampled_index: tensor of shape (batch_size, sequence_length)
         # Gather the logits corresponding to the sampled indices.
+        print('Extracting values')
+        assert 1 == 2  # Check if the code reaches this point
         return torch.gather(values, dim=2, index=sampled_index.unsqueeze(-1)).squeeze(-1)
 
 
@@ -56,7 +58,7 @@ class DataParallelPPOQCritic(BasePPOCritic):
 
         self.ulysses_sequence_parallel_size = self.config.get('ulysses_sequence_parallel_size', 1)
 
-    def _forward_micro_batch(self, micro_batch, sampled_index):
+    def _forward_micro_batch(self, micro_batch):
         response_length = micro_batch['responses'].size(-1)
         with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
             input_ids = micro_batch['input_ids']
@@ -186,7 +188,7 @@ class DataParallelPPOQCritic(BasePPOCritic):
 
                 eos_mask = attention_mask[:, -response_length - 1:-1]
 
-                vpreds = self._forward_micro_batch(data) # TODO: pass in index
+                vpreds = self._forward_micro_batch(data)
 
                 # assert not torch.any(torch.isnan(vpreds)).item()
 
